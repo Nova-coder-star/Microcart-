@@ -1,0 +1,60 @@
+-- ===================================================
+-- 1. Sellers Table
+-- ===================================================
+CREATE TABLE IF NOT EXISTS sellers (
+id INT AUTO_INCREMENT PRIMARY KEY,
+brandname VARCHAR(255) NOT NULL,
+email VARCHAR(255) NOT NULL UNIQUE,
+password VARCHAR(255) NOT NULL,
+call_number VARCHAR(50),
+whatsapp_number VARCHAR(50),
+address VARCHAR(255),
+api_token VARCHAR(255),
+verified TINYINT(1) DEFAULT 0,
+post_count INT DEFAULT 0, -- track number of posts for freemium limit
+profile_image VARCHAR(255) DEFAULT '/default-avatar.png', -- ✅ added for profile uploads
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===================================================
+-- 2. Storefronts Table
+-- ===================================================
+CREATE TABLE IF NOT EXISTS storefronts (
+id INT AUTO_INCREMENT PRIMARY KEY,
+name VARCHAR(255) NOT NULL,
+logo VARCHAR(255) DEFAULT '/default-logo.png',
+slug VARCHAR(255) NOT NULL UNIQUE,
+location VARCHAR(255),
+user_id INT NOT NULL, -- link to sellers table
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (user_id) REFERENCES sellers(id) ON DELETE CASCADE
+);
+
+-- ===================================================
+-- 3. Email Verifications Table
+-- ===================================================
+CREATE TABLE IF NOT EXISTS email_verifications (
+id INT AUTO_INCREMENT PRIMARY KEY,
+user_id INT NOT NULL,
+token VARCHAR(64) NOT NULL,
+expires_at DATETIME NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (user_id) REFERENCES sellers(id) ON DELETE CASCADE
+);
+
+-- ===================================================
+-- 4. Products Table
+-- ===================================================
+CREATE TABLE IF NOT EXISTS products (
+id INT AUTO_INCREMENT PRIMARY KEY,
+user_id INT NOT NULL, -- seller who owns the product
+title VARCHAR(255) NOT NULL,
+price DECIMAL(15,2) NOT NULL,
+description TEXT NOT NULL,
+images JSON DEFAULT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (user_id) REFERENCES sellers(id) ON DELETE CASCADE
+);
+
+
+

@@ -1,0 +1,8 @@
+[phases.setup]
+commands = ["echo 'Setting up PHP environment'"]
+
+[phases.build]
+commands = ["echo 'No build step for PHP'"]
+
+[phases.start]
+commands = ["php -S 0.0.0.0:8080 -t ."]

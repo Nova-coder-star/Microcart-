@@ -1,0 +1,33 @@
+# ===================================================
+# MicrocartX .htaccess (Optimized for Live)
+# ===================================================
+
+# 1. Protect sensitive files
+<FilesMatch "^(db\.php|config\.php|\.env)$">
+  Order Allow,Deny
+  Deny from all
+</FilesMatch>
+
+# 2. Disable directory listing
+Options -Indexes
+
+# 3. Optional: prevent direct access to uploads (stronger security)
+<FilesMatch "^(uploads/.*)$">
+  Order Allow,Deny
+  Deny from all
+</FilesMatch>
+
+# 4. Allow Cross-Origin for API folder
+<IfModule mod_headers.c>
+  <FilesMatch "\.php$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+  </FilesMatch>
+</IfModule>
+
+# 5. Optional: Pretty URLs for API or frontend routing
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
