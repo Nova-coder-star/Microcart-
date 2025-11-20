@@ -3136,7 +3136,8 @@ this.filteredResults = this.stores;
 
      
    
-const LoginPage = {
+
+ const LoginPage = {
   template: `
   <div class="signup-page">
     <h2 class="modal-header">Seller Access</h2>
@@ -3148,7 +3149,6 @@ const LoginPage = {
 
     <form @submit.prevent="handleLogin">
       <input type="email" v-model="sellerEmail" placeholder="Email address" required />
-      <input :type="showPassword ? 'text' : 'password'" v-model="sellerPassword" placeholder="Password" required />
       
       <button type="submit" :disabled="loading">
         {{ loading ? "Logging in..." : "Login" }}
@@ -3165,8 +3165,6 @@ const LoginPage = {
   data() {
     return {
       sellerEmail: '',
-      sellerPassword: '',
-      showPassword: false,
       loading: false,
       toast: {
         visible: false,
@@ -3191,31 +3189,28 @@ const LoginPage = {
         this.showToast("Please enter a valid email.", "error");
         return;
       }
-      
-      if (!this.sellerPassword) {
-        this.showToast("Password is required.", "error");
-        return;
-      }
-      
+
       this.loading = true;
-      
-      const formData = new FormData();
-      formData.append('email', this.sellerEmail);
-      formData.append('password', this.sellerPassword);
-      
+
       try {
-const res = await fetch("/loginup.php",  {
+        const formData = new FormData();
+        formData.append('email', this.sellerEmail);
+
+        const res = await fetch("/login.php", {
           method: 'POST',
           body: formData
         });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
         if (result.success) {
-          localStorage.setItem('userId', result.userId);
+          // Store user info locally
+          localStorage.setItem('userId', result.user.id);
+          localStorage.setItem('brandname', result.user.brandname);
+          
           this.showToast('Login successful!', 'success');
-          setTimeout(() => this.$router.push('/dashboard'), 1200);
+          setTimeout(() => this.$router.push('/profile'), 1200);
         } else {
           this.showToast(result.message || 'Invalid credentials.', 'error');
         }
