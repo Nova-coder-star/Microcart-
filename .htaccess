@@ -1,0 +1,25 @@
+# Disable directory listing
+Options -Indexes
+
+# Protect sensitive files (Apache 2.4 syntax)
+<FilesMatch "^(db\.php|config\.php|\.env)$">
+  Require all denied
+</FilesMatch>
+
+# Allow uploads folder
+<Directory "uploads">
+  Require all granted
+</Directory>
+
+# CORS for API
+<IfModule mod_headers.c>
+  Header always set Access-Control-Allow-Origin "*"
+  Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+  Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Vue SPA Routing
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
