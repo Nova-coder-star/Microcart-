@@ -1,5 +1,5 @@
 <?php
-$host = "localhost";
+$host = "db.pxxl.pro";
 $port = 56224;
 $db   = "db_695c9cfd";
 $user = "user_71553f4a";
