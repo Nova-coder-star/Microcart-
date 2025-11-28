@@ -1,21 +1,30 @@
 <?php
-$host = "db.pxxl.pro";
-$port = 56224;
-$db   = "db_695c9cfd";
-$user = "user_71553f4a";
-$pass = "789304d582936cd894ab650416050655";
+// ===========================================
+// DATABASE CONNECTION (PDO)
+// ===========================================
 
-$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+// Your actual database credentials:
+$host = "db.pxxl.pro";
+
+$port = "47334";
+
+$dbname = "db_c8184a7e";
+
+$user = "user_ce386a51";
+
+$pass = "9df476a7e863df64c96e8416f7c012ad";
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $user,
+        $pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
 } catch (PDOException $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed: ' . $e->getMessage()
-    ]);
-    exit;
+    die("Database connection failed: " . $e->getMessage());
 }
+?>

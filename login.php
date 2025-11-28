@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: https://microcart.pxxl.click');
+header('Access-Control-Allow-Origin: *'); // or your domain
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once 'db.php';
+require_once 'db.php'; // $pdo = PDO instance
 
 $email = trim($_POST['email'] ?? '');
 
@@ -20,7 +20,7 @@ if (!$email) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT id, brandname, verified FROM sellers WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id, brandname FROM sellers WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -30,16 +30,12 @@ try {
         exit;
     }
 
-    if (!$user['verified']) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Please verify your email first.']);
-        exit;
-    }
-
+    // --- Generate API token ---
     $token = bin2hex(random_bytes(32));
     $update = $pdo->prepare("UPDATE sellers SET api_token = ? WHERE id = ?");
     $update->execute([$token, $user['id']]);
 
+    // --- Fetch store ID ---
     $storeStmt = $pdo->prepare("SELECT id FROM storefronts WHERE user_id = ?");
     $storeStmt->execute([$user['id']]);
     $store = $storeStmt->fetch(PDO::FETCH_ASSOC);
@@ -59,3 +55,4 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error during login.']);
 }
+?>

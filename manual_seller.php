@@ -2,12 +2,12 @@
 require 'db.php'; // your working PDO connection
 
 // ======= SELLER DATA =======
-$brandname       = 'Test Brand';
-$email           = 'testbrand@example.com'; // use this to log in
-$call_number     = '08012345678';
-$whatsapp_number = '08012345678';
+$brandname       = 'Neo';
+$email           = 'Neo@example.com'; // use this to log in
+$call_number     = '07043682582';
+$whatsapp_number = '08026450331';
 $address         = 'Lagos';
-$profile_image   = '/default-avatar.png';
+$profile_image   = '/20250731_141550.png';
 $location        = 'Lagos';
 
 // ======= CREATE API TOKEN =======

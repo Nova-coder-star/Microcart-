@@ -51,12 +51,29 @@ $slug = slugify($brandname);
 // --- HANDLE LOGO UPLOAD (optional) ---
 $logoPath = null;
 if (!empty($_FILES['logo']['name'])) {
+    $uploadDir = __DIR__ . '/upload/';
 
+    // Create folder if it doesn't exist
+    if (!is_dir($uploadDir)) {
+        if (!mkdir($uploadDir, 0755, true)) {
+            echo json_encode(['success' => false, 'message' => 'Failed to create upload directory']);
+            exit;
+        }
+    }
+
+    // Check folder permissions
+    if (!is_writable($uploadDir)) {
+        echo json_encode(['success' => false, 'message' => 'Upload directory is not writable']);
+        exit;
+    }
+
+    // File size check (max 2MB)
     if ($_FILES['logo']['size'] > 2 * 1024 * 1024) {
         echo json_encode(['success' => false, 'message' => 'Logo file too large (max 2MB)']);
         exit;
     }
 
+    // MIME type check
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mimeType = finfo_file($finfo, $_FILES['logo']['tmp_name']);
     finfo_close($finfo);
@@ -67,22 +84,24 @@ if (!empty($_FILES['logo']['name'])) {
         exit;
     }
 
+    // Move uploaded file
     $extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
     $filename  = uniqid('logo_', true) . '.' . $extension;
-    $target    = __DIR__ . '/' . $filename;
+    $target    = $uploadDir . $filename;
 
     if (!move_uploaded_file($_FILES['logo']['tmp_name'], $target)) {
         echo json_encode(['success' => false, 'message' => 'Failed to upload logo']);
         exit;
     }
 
-    $logoPath = "https://microcart.pxxl.click/" . $filename;
+    // Public URL
+    $logoPath = "https://microcart.pxxl.click/upload/" . $filename;
 }
 
-// --- INSERT SELLER (NO PASSWORD) ---
+// --- INSERT SELLER ---
 $stmt = $db->prepare("
-    INSERT INTO sellers (brandname, email, call_number, whatsapp_number, address, verified)
-    VALUES (?, ?, ?, ?, ?, 0)
+    INSERT INTO sellers (brandname, email, call_number, whatsapp_number, address)
+    VALUES (?, ?, ?, ?, ?)
 ");
 $stmt->execute([$brandname, $email, $call_number, $whatsapp_number, $address]);
 $userId = $db->lastInsertId();
@@ -95,23 +114,6 @@ $stmt = $db->prepare("
 $stmt->execute([$brandname, $logoPath, $slug, $location, $userId]);
 $storeId = $db->lastInsertId();
 
-// --- EMAIL VERIFY TOKEN ---
-$verifyToken = bin2hex(random_bytes(32));
-$expiresAt = date('Y-m-d H:i:s', strtotime('+1 day'));
-
-$stmt = $db->prepare("
-    INSERT INTO email_verifications (user_id, token, expires_at)
-    VALUES (?, ?, ?)
-");
-$stmt->execute([$userId, $verifyToken, $expiresAt]);
-
-$verifyLink = "https://microcart.pxxl.click/verify.php?token=$verifyToken";
-$subject = "Verify your Microcart account";
-$message = "Hi $brandname,\n\nPlease verify your account:\n$verifyLink\n\nExpires in 24 hours.";
-$headers = "From: no-reply@microcart.com\r\n";
-
-@mail($email, $subject, $message, $headers);
-
 // --- API TOKEN ---
 $apiToken = bin2hex(random_bytes(32));
 $stmt = $db->prepare("UPDATE sellers SET api_token = ? WHERE id = ?");
@@ -120,9 +122,10 @@ $stmt->execute([$apiToken, $userId]);
 // --- RESPONSE ---
 echo json_encode([
     'success' => true,
-    'message' => 'Signup successful! Verification email sent.',
+    'message' => 'Signup successful!',
     'userId'  => $userId,
     'storeId' => $storeId,
-    'token'   => $apiToken
+    'token'   => $apiToken,
+    'logo'    => $logoPath
 ]);
 ?>

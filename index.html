@@ -3054,23 +3054,24 @@ mounted() {
         return;
       }
 
-      if (!this.sellerLogo) {
-        this.showToast("Please upload a logo.", "error");
-        return;
-      }
-      
+// Logo is optional — no validation required
+
       this.loading = true;
       
       const call = this.normalizeNumber(this.sellerCallNumber);
       const wa = this.normalizeNumber(this.sellerWhatsapp);
       
       const formData = new FormData();
-      formData.append("brandname", this.sellerBrandname);
-      formData.append("email", this.sellerEmail);
-      formData.append("location", this.sellerLocation);
-      formData.append("call_number", call);
-      formData.append("whatsapp_number", wa);
-      if (this.sellerLogo) formData.append("logo", this.sellerLogo);
+formData.append("brandname", this.sellerBrandname);
+formData.append("email", this.sellerEmail);
+formData.append("location", this.sellerLocation);
+formData.append("call_number", call);
+formData.append("whatsapp_number", wa);
+
+// Append logo ONLY if the user selected one
+if (this.sellerLogo) {
+  formData.append("logo", this.sellerLogo);
+}
       
       try {
 const res = await fetch("/signup.php", {
@@ -3083,27 +3084,31 @@ const res = await fetch("/signup.php", {
         
         const data = await res.json();
         
-    if (data.success) {
-          localStorage.setItem("userId", data.userId);
-          localStorage.setItem("storeId", data.storeId);
-          
-          
-// after successful signup
-this.stores.unshift({
-  id: data.storeId,
-  name: this.sellerBrandname,
-  logo: this.logoPreview,
-  location: this.sellerLocation,
-  slug: this.sellerBrandname.toLowerCase().replace(/\s+/g, "-")
-});
-this.filteredResults = this.stores;
+if (data.success) {
+  localStorage.setItem("userId", data.userId);
+  localStorage.setItem("storeId", data.storeId);
+  
+  // --- SAFELY UPDATE STORES ---
+  if (this.stores) {
+    this.stores.unshift({
+      id: data.storeId,
+      name: this.sellerBrandname,
+      logo: this.logoPreview || this.defaultLogo,
+      location: this.sellerLocation,
+      slug: this.sellerBrandname.toLowerCase().replace(/\s+/g, "-")
+    });
+    
+    if (this.filteredResults) {
+      this.filteredResults = this.stores;
+    }
+  }
+  
+  this.showToast("Signup successful!", "success");
+  setTimeout(() => this.$router.push("/profile"), 1500);
+} else {
+  this.showToast(data.message || "Signup failed. Try again.", "error");
+}
 
-
-          this.showToast("Signup successful!", "success");
-          setTimeout(() => this.$router.push("/profile"), 1500);
-        } else {
-          this.showToast(data.message || "Signup failed. Try again.", "error");
-        }
       } catch (err) {
         console.error("Signup error:", err);
         this.showToast("Network error. Please try again.", "error");
@@ -3171,15 +3176,14 @@ const LoginPage = {
         return;
       }
       
-      
+    
       this.loading = true;
       
       const formData = new FormData();
       formData.append('email', this.sellerEmail);
 
-      
       try {
-const res = await fetch("/loginup.php", {
+const res = await fetch("/login.php", {
   method: 'POST',
   body: formData
 });
@@ -3924,11 +3928,7 @@ const API = {
   
 };
 
-// Usage example
-/*fetch(API.GET_USER, { method: 'POST', body: JSON.stringify({ userId }) })
-  .then(res => res.json())
-  .then(data => console.log(data));
-  */
+
   
 
 const ProfilePage =  {

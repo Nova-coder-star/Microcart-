@@ -2,8 +2,8 @@
 header('Content-Type: application/json');
 require 'db.php'; // Make sure $pdo is available here
 
-// Base URL for uploaded images (no uploads folder)
-$baseUrl = 'https://microcart.pxxl.click/';
+// Base URL for uploaded images
+$baseUrl = 'https://microcart.pxxl.click/upload/';
 
 // Get user ID and uploaded file
 $user_id = $_POST['userId'] ?? '';
@@ -34,10 +34,10 @@ if ($file['size'] > $maxSize) {
     exit;
 }
 
-// Save file to the ROOT directory of the project
+// Save file to the existing /upload folder
 $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 $filename = uniqid('profile_', true) . '.' . $extension;
-$targetPath = __DIR__ . '/' . $filename;  // <-- root of project
+$targetPath = __DIR__ . '/upload/' . $filename;
 
 // Move uploaded file
 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
@@ -56,5 +56,4 @@ if (move_uploaded_file($file['tmp_name'], $targetPath)) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to save file']);
 }
-
 ?>

@@ -17,20 +17,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once 'db.php';
 
-// --- Read JSON body ---
-$input = json_decode(file_get_contents('php://input'), true);
-$user_id     = $input['user_id'] ?? '';
-$title       = trim($input['title'] ?? '');
-$price       = trim($input['price'] ?? '');
-$description = trim($input['description'] ?? '');
-$images      = $input['images'] ?? []; // Array of image URLs
+// --- Ensure user is logged in ---
+$user_id = $_POST['user_id'] ?? null;
+$title = trim($_POST['title'] ?? '');
+$price = trim($_POST['price'] ?? '');
+$description = trim($_POST['description'] ?? '');
 
-// --- Validate required fields ---
-if (!$user_id || !$title || !$price || !$description || !is_array($images) || count($images) === 0) {
+if (!$user_id || !$title || !$price || !$description) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Missing required fields or images.']);
+    echo json_encode(['success' => false, 'message' => 'Missing required fields.']);
     exit;
 }
+
+// --- Sanitize text ---
+$title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+$description = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
 
 // --- Clean price ---
 $priceClean = number_format((float)preg_replace("/[^0-9.]/", "", $price), 2, '.', '');
@@ -40,16 +41,11 @@ if (!is_numeric($priceClean) || $priceClean < 0) {
     exit;
 }
 
-// --- Sanitize text ---
-$title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
-$description = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
-
 try {
     // --- Check user ---
     $stmt = $pdo->prepare("SELECT post_count FROM sellers WHERE id = ?");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
     if (!$user) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'User not found.']);
@@ -64,8 +60,43 @@ try {
         exit;
     }
 
-    // --- Limit images to 2 ---
-    $imagePaths = array_slice($images, 0, 2);
+    // --- Handle image uploads ---
+    $uploadDir = __DIR__ . "/upload/$user_id/";
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+    $imagePaths = [];
+    $maxImages = 2;
+    for ($i = 0; $i < $maxImages; $i++) {
+        if (isset($_FILES["image_$i"]) && $_FILES["image_$i"]["error"] === UPLOAD_ERR_OK) {
+            $file = $_FILES["image_$i"];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!in_array($file['type'], $allowedTypes)) {
+                echo json_encode(['success' => false, 'message' => $file['name'] . ' has unsupported format.']);
+                exit;
+            }
+            if ($file['size'] > 3 * 1024 * 1024) {
+                echo json_encode(['success' => false, 'message' => $file['name'] . ' exceeds 3MB.']);
+                exit;
+            }
+
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = uniqid('prod_', true) . "." . $ext;
+            $target = $uploadDir . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $target)) {
+                echo json_encode(['success' => false, 'message' => 'Failed to upload ' . $file['name']]);
+                exit;
+            }
+
+            $imagePaths[] = "https://microcart.pxxl.click/upload/$user_id/$filename";
+        }
+    }
+
+    if (count($imagePaths) === 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'At least one image is required.']);
+        exit;
+    }
 
     // --- Insert product ---
     $stmt = $pdo->prepare("INSERT INTO products (user_id, title, price, description, images) VALUES (?, ?, ?, ?, ?)");
