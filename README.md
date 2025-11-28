@@ -20,7 +20,7 @@ Whether you’re a boutique owner, reseller, or service provider, Microcart give
 
 🚀 Go Premium for More Power
 
-Upgrade to Premium for only ₦5,000 (≈ $3.50) and unlock:
+Upgrade to Premium for only ₦3,000 (≈ $2.00) and unlock:
 
 💾 Unlimited product uploads
 
